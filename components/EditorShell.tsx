@@ -15,6 +15,7 @@ import { FontSize } from "./FontSize";
 import { Toolbar } from "./Toolbar";
 import { Avatar, RoleTag, api } from "./ui";
 import { ShareDialog } from "./ShareDialog";
+import { Attachments } from "./Attachments";
 
 type Role = "OWNER" | "EDITOR" | "VIEWER";
 type Props = {
@@ -176,6 +177,7 @@ export function EditorShell({ doc, owner, me, role, hasPendingRequest }: Props) 
         <article className="paper">
           <EditorContent editor={editor} />
         </article>
+        <Attachments docId={doc.id} canEdit={canEdit} onToast={flash} />
       </div>
 
       {shareOpen && (
@@ -276,6 +278,9 @@ function FileMenu({ docId, title, isOwner, onToast }: { docId: string; title: st
           </a>
           <a className="menu-item" role="menuitem" href={`/api/documents/${docId}/export?format=html`}>
             Download web page (.html)
+          </a>
+          <a className="menu-item" role="menuitem" href={`/api/documents/${docId}/export?format=docx`}>
+            Download Word (.docx)
           </a>
           <a className="menu-item" role="menuitem" href={`/docs/${docId}/print`} target="_blank" rel="noopener">
             Print / Save as PDF

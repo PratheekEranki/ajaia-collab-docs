@@ -65,3 +65,13 @@ describe("exports", () => {
     expect(previewText("<h2>Goal</h2><p>Ship &amp; learn</p>")).toBe("Goal Ship & learn");
   });
 });
+
+import { isAllowedAttachment } from "../lib/content";
+describe("attachments allowlist", () => {
+  it("accepts common document and image types, case-insensitively", () => {
+    for (const f of ["spec.PDF", "budget.xlsx", "photo.jpeg", "notes.md", "bundle.zip"]) expect(isAllowedAttachment(f)).toBe(true);
+  });
+  it("rejects executables, scripts and files without an extension", () => {
+    for (const f of ["setup.exe", "run.sh", "page.html", "image.svg", "README"]) expect(isAllowedAttachment(f)).toBe(false);
+  });
+});

@@ -20,7 +20,18 @@ export const GET = route<{ params: Promise<{ id: string }> }>(async (req, { para
 </head><body><h1>${escapedTitle}</h1>${doc.content}</body></html>`;
     return download(page, `${name}.html`, "text/html; charset=utf-8");
   }
-  throw invalid("Choose an export format: md or html. For PDF, use Print / Save as PDF.");
+  if (format === "docx") {
+    const { default: HTMLtoDOCX } = await import("html-to-docx");
+    const escapedTitle = doc.title.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    const buffer = (await HTMLtoDOCX(`<h1>${escapedTitle}</h1>${doc.content}`, null, { title: doc.title, font: "Georgia" })) as Buffer;
+    return new Response(new Uint8Array(buffer), {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "Content-Disposition": `attachment; filename="${name}.docx"`,
+      },
+    });
+  }
+  throw invalid("Choose an export format: md, html or docx. For PDF, use Print / Save as PDF.");
 });
 
 function download(body: string, filename: string, type: string) {

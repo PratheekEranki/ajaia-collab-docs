@@ -149,6 +149,27 @@ describe.skipIf(!BASE)("API permissions (e2e)", () => {
     expect(md.headers.get("content-disposition")).toMatch(/\.md"/);
     const html = await call(alice, `/api/documents/${docId}/export?format=html`);
     expect(await html.text()).toContain("<!doctype html>");
+    const docx = await call(alice, `/api/documents/${docId}/export?format=docx`);
+    expect(docx.status).toBe(200);
+    expect(Buffer.from(await docx.arrayBuffer()).subarray(0, 2).toString()).toBe("PK"); // .docx is a zip
+  });
+
+  it("attachments: editors upload, viewers download only, bad types rejected", async () => {
+    const form = new FormData();
+    form.append("file", new File(["a,b\n1,2"], "data.csv", { type: "text/csv" }));
+    const up = await call(alice, `/api/documents/${docId}/attachments`, { method: "POST", body: form });
+    expect(up.status).toBe(201);
+    const att = (await up.json()).attachment;
+    // Carol is a viewer (from the link test): can download, can't delete or upload.
+    const dl = await call(carol, `/api/documents/${docId}/attachments/${att.id}`);
+    expect(dl.status).toBe(200);
+    expect(dl.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(await dl.text()).toBe("a,b\n1,2");
+    expect((await call(carol, `/api/documents/${docId}/attachments/${att.id}`, { method: "DELETE" })).status).toBe(403);
+    const exe = new FormData();
+    exe.append("file", new File(["MZ"], "setup.exe"));
+    expect((await call(alice, `/api/documents/${docId}/attachments`, { method: "POST", body: exe })).status).toBe(415);
+    expect((await call(alice, `/api/documents/${docId}/attachments/${att.id}`, { method: "DELETE" })).status).toBe(204);
   });
 
   it("rejects a wrong password with a generic message", async () => {

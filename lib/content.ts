@@ -90,3 +90,13 @@ export function previewText(html: string, max = 160): string {
     .trim();
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
+
+// Attachments (ADR-0007): common document/image/archive types, ≤ 2 MB, stored in Postgres.
+export const ATTACHMENT_TYPES = [
+  ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".md", ".csv",
+  ".png", ".jpg", ".jpeg", ".gif", ".webp", ".zip",
+] as const;
+
+export function isAllowedAttachment(filename: string): boolean {
+  return (ATTACHMENT_TYPES as readonly string[]).includes(extensionOf(filename));
+}
