@@ -1,6 +1,6 @@
 # ADR-0004: Demo sign-in with seeded users and a signed cookie
 
-**Status:** Accepted · 2026-11-13
+**Status:** Superseded by [ADR-0008](0008-accounts-with-admin-approval.md) · 2026-11-13
 
 ## Context
 Sharing can only be demonstrated with more than one user. Real auth (passwords, OAuth, email magic links) costs time and makes reviewers create accounts. The brief explicitly allows seeded or mocked users.

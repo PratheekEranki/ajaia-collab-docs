@@ -1,12 +1,16 @@
 // Idempotent seed: 3 demo users + sample docs that exercise every sharing state.
 import { PrismaClient, Role } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+// Demo password is public on purpose (shown on the sign-in page) so reviewers can test sharing.
+export const DEMO_PASSWORD = "ajaia-demo";
+
 const users = [
-  { id: "alice", name: "Alice Chen", email: "alice@ajaia.dev" },
-  { id: "bob", name: "Bob Rivera", email: "bob@ajaia.dev" },
-  { id: "carol", name: "Carol Okafor", email: "carol@ajaia.dev" },
+  { id: "alice", name: "Alice Chen", email: "alice@ajaia.dev", isAdmin: true },
+  { id: "bob", name: "Bob Rivera", email: "bob@ajaia.dev", isAdmin: false },
+  { id: "carol", name: "Carol Okafor", email: "carol@ajaia.dev", isAdmin: false },
 ];
 
 const docs = [
@@ -42,8 +46,10 @@ const docs = [
 ];
 
 async function main() {
+  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
   for (const u of users) {
-    await prisma.user.upsert({ where: { id: u.id }, update: { name: u.name, email: u.email }, create: u });
+    const data = { ...u, passwordHash, status: "ACTIVE" as const };
+    await prisma.user.upsert({ where: { id: u.id }, update: data, create: data });
   }
   for (const { shares, ...d } of docs) {
     await prisma.document.upsert({ where: { id: d.id }, update: {}, create: d });

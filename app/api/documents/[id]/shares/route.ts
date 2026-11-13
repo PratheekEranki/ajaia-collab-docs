@@ -25,7 +25,7 @@ export const GET = route<Ctx>(async (_req, { params }) => {
         })
       : [],
     prisma.accessRequest.findFirst({ where: { documentId: doc.id, userId: user.id, status: "PENDING" }, select: { id: true } }),
-    isOwner ? prisma.user.findMany({ where: { id: { not: doc.ownerId } }, select: { id: true, name: true, email: true }, orderBy: { name: "asc" } }) : [],
+    isOwner ? prisma.user.findMany({ where: { id: { not: doc.ownerId }, status: "ACTIVE" }, select: { id: true, name: true, email: true }, orderBy: { name: "asc" } }) : [],
   ]);
   return NextResponse.json({
     role,
@@ -49,7 +49,7 @@ export const PUT = route<Ctx>(async (req, { params }) => {
   const { doc } = await loadDoc((await params).id, user.id, "manage");
   const { email, role } = await readJson(req, shareSchema);
   const target = await prisma.user.findUnique({ where: { email } });
-  if (!target) throw new ApiError(404, "NOT_FOUND", `No account uses ${email}. Try alice@, bob@ or carol@ajaia.dev.`);
+  if (!target || target.status !== "ACTIVE") throw new ApiError(404, "NOT_FOUND", `No account uses ${email}. Try alice@, bob@ or carol@ajaia.dev.`);
   if (target.id === doc.ownerId) throw invalid(`${target.name} owns this document already.`);
   await prisma.$transaction([
     prisma.documentShare.upsert({

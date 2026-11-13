@@ -20,10 +20,18 @@ enum RequestStatus {
   DENIED
 }
 
+enum UserStatus {
+  PENDING // signed up, waiting for an admin (ADR-0008)
+  ACTIVE
+}
+
 model User {
-  id        String          @id // readable seed ids: alice, bob, carol
-  email     String          @unique
-  name      String
+  id           String          @id @default(cuid()) // seed users keep readable ids: alice, bob, carol
+  email        String          @unique
+  name         String
+  passwordHash String? // bcrypt
+  isAdmin      Boolean         @default(false)
+  status       UserStatus      @default(ACTIVE)
   owned     Document[]
   shares    DocumentShare[]
   requests  AccessRequest[]

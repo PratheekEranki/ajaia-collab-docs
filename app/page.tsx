@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { countDocs, listDocs } from "@/lib/documents";
-import { Brand, Logo, RoleTag } from "@/components/ui";
+import { Brand, RoleTag } from "@/components/ui";
 import { SignIn } from "@/components/SignIn";
 import { UserMenu } from "@/components/UserMenu";
 import { DashboardActions } from "@/components/DashboardActions";
@@ -17,37 +16,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
   if (!user) {
     // Only allow returning to a share link (no open redirects).
     const next = sp.next?.startsWith("/share/") ? sp.next : undefined;
-    const users = await prisma.user.findMany({
-      orderBy: { name: "asc" },
-      include: { _count: { select: { owned: true, shares: true } } },
-    });
-    return (
-      <main className="signin">
-        <div className="signin-inner">
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <span className="brand">
-              <Logo size={28} /> Ajaia Docs
-            </span>
-            <h1>Sign in</h1>
-            <p className="muted" style={{ margin: 0 }}>
-              Pick a demo account. Each one owns different documents, so you can test sharing by switching between them.
-            </p>
-          </div>
-          <SignIn
-            next={next}
-            users={users.map((u) => ({
-              id: u.id,
-              name: u.name,
-              email: u.email,
-              summary: `Owns ${u._count.owned} · ${u._count.shares} shared with them`,
-            }))}
-          />
-          <p className="mono" style={{ margin: 0 }}>
-            Demo sign-in · no passwords · seeded accounts
-          </p>
-        </div>
-      </main>
-    );
+    return <SignIn next={next} />;
   }
 
   const tab = sp.tab === "shared" ? "shared" : "owned";
@@ -57,7 +26,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
     <>
       <header className="topbar">
         <Brand />
-        <UserMenu user={{ id: user.id, name: user.name }} />
+        <UserMenu user={{ id: user.id, name: user.name, isAdmin: user.isAdmin }} />
       </header>
       <main className="page">
         <div className="page-head">

@@ -7,12 +7,18 @@ import { afterAll, describe, expect, it } from "vitest";
 
 const BASE = process.env.APP_URL?.replace(/\/$/, "");
 
-async function signIn(userId: string): Promise<string> {
-  const res = await fetch(`${BASE}/api/session`, {
+const DEMO_PASSWORD = "ajaia-demo"; // public demo credential, shown on the sign-in page
+
+function postSession(email: string, password: string) {
+  return fetch(`${BASE}/api/session`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId }),
+    body: JSON.stringify({ email, password }),
   });
+}
+
+async function signIn(userId: string): Promise<string> {
+  const res = await postSession(`${userId}@ajaia.dev`, DEMO_PASSWORD);
   expect(res.status).toBe(200);
   const cookie = res.headers.get("set-cookie");
   expect(cookie).toBeTruthy();
@@ -143,5 +149,43 @@ describe.skipIf(!BASE)("API permissions (e2e)", () => {
     expect(md.headers.get("content-disposition")).toMatch(/\.md"/);
     const html = await call(alice, `/api/documents/${docId}/export?format=html`);
     expect(await html.text()).toContain("<!doctype html>");
+  });
+
+  it("rejects a wrong password with a generic message", async () => {
+    const res = await postSession("alice@ajaia.dev", "not-the-password");
+    expect(res.status).toBe(401);
+    expect((await res.json()).error.message).toBe("Email or password is incorrect.");
+  });
+
+  it("runs sign-up → pending → admin approval → sign-in", async () => {
+    const email = `e2e-${Date.now()}@example.com`;
+    const signup = await fetch(`${BASE}/api/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "E2E Person", email, password: "longenough1" }),
+    });
+    expect(signup.status).toBe(201);
+    // Pending accounts can't sign in yet.
+    expect((await postSession(email, "longenough1")).status).toBe(403);
+    // Non-admins can't see or approve requests.
+    expect((await call(bob, "/api/admin/users")).status).toBe(403);
+    const { users } = await (await call(alice, "/api/admin/users")).json();
+    const pending = users.find((u: { email: string }) => u.email === email);
+    expect(pending.status).toBe("PENDING");
+    expect((await call(bob, `/api/admin/users/${pending.id}`, { method: "PATCH", body: JSON.stringify({ action: "approve" }) })).status).toBe(403);
+    expect((await call(alice, `/api/admin/users/${pending.id}`, { method: "PATCH", body: JSON.stringify({ action: "approve" }) })).status).toBe(200);
+    expect((await postSession(email, "longenough1")).status).toBe(200);
+  });
+
+  it("lets an admin deny a request (removes it) and reject duplicates", async () => {
+    const email = `e2e-deny-${Date.now()}@example.com`;
+    const body = JSON.stringify({ name: "Deny Me", email, password: "longenough1" });
+    await fetch(`${BASE}/api/signup`, { method: "POST", headers: { "Content-Type": "application/json" }, body });
+    const dup = await fetch(`${BASE}/api/signup`, { method: "POST", headers: { "Content-Type": "application/json" }, body });
+    expect(dup.status).toBe(409);
+    const { users } = await (await call(alice, "/api/admin/users")).json();
+    const id = users.find((u: { email: string }) => u.email === email).id;
+    expect((await call(alice, `/api/admin/users/${id}`, { method: "PATCH", body: JSON.stringify({ action: "deny" }) })).status).toBe(200);
+    expect((await postSession(email, "longenough1")).status).toBe(401);
   });
 });

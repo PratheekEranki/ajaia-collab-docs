@@ -30,7 +30,13 @@ export function verifySession(token: string | undefined): string | null {
 
 export async function getCurrentUser() {
   const id = verifySession((await cookies()).get(COOKIE)?.value);
-  return id ? prisma.user.findUnique({ where: { id } }) : null;
+  if (!id) return null;
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: { id: true, name: true, email: true, isAdmin: true, status: true },
+  });
+  // A pending account (or one deleted by an admin) has no session.
+  return user?.status === "ACTIVE" ? user : null;
 }
 
 export async function startSession(userId: string) {

@@ -48,3 +48,9 @@ export async function requireUser() {
   if (!user) throw unauthenticated();
   return user;
 }
+
+export async function requireAdmin() {
+  const user = await requireUser();
+  if (!user.isAdmin) throw forbidden("Only admins can manage accounts.");
+  return user;
+}
