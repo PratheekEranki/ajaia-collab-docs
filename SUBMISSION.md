@@ -8,7 +8,7 @@
 | **README** (setup, run, test, deploy, status) | [README.md](README.md) |
 | **Architecture note** | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), with decision records in [docs/adr/](docs/adr/README.md) |
 | **AI workflow note** | [docs/AI_WORKFLOW.md](docs/AI_WORKFLOW.md) |
-| **Walkthrough video** | [VIDEO_URL.txt](VIDEO_URL.txt) |
+| **Walkthrough video** | https://www.loom.com/share/2b5208d1caeb44a9b5cfcb342f29831b (also in [VIDEO_URL.txt](VIDEO_URL.txt)) |
 | **Screenshots** | [docs/screenshots/](docs/screenshots/) |
 | Product spec & plan | [docs/SPEC.md](docs/SPEC.md), [tasks/plan.md](tasks/plan.md), [tasks/todo.md](tasks/todo.md) |
 | Automated tests | `tests/` (unit + end-to-end API suite). See README → Tests |
