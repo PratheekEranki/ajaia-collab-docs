@@ -8,7 +8,9 @@ The brief rewards a **coherent, deployed product slice** over feature count. I p
 2. **An access model enforced on the server.** Owner / Editor / Viewer, with every API route checking capability. This is the part most demos fake with hidden buttons.
 3. **Getting content in and out.** Import .txt/.md/.docx as new docs; export to Markdown, HTML and PDF.
 
-I cut real-time co-editing, comments, version history, real auth and email sending. Each one is either a project of its own (co-editing needs CRDTs/websockets) or adds infrastructure reviewers can't verify (email). Rationale per decision is in `docs/adr/`.
+After a first deployed slice, I added two things on product feedback: **Google Docs–style formatting** (fonts, sizes, colours, highlighter, alignment) and **real accounts with admin approval** (ADR-0008), plus **attachments** and **Word export**.
+
+I cut real-time co-editing, comments, version history and email sending. Each one is either a project of its own (co-editing needs CRDTs/websockets) or adds infrastructure reviewers can't verify (email). Rationale per decision is in `docs/adr/`.
 
 ## 2. System overview
 
@@ -30,9 +32,12 @@ One deployable unit (ADR-0001): the frontend, API and server rendering live in o
 
 ```prisma
 model User {
-  id        String   @id            // "alice", "bob", "carol" — readable seed ids
-  email     String   @unique
-  name      String
+  id           String  @id @default(cuid())   // seeds keep "alice", "bob", "carol"
+  email        String  @unique
+  name         String
+  passwordHash String?                         // bcrypt (ADR-0008)
+  isAdmin      Boolean @default(false)
+  status       UserStatus @default(ACTIVE)     // PENDING until an admin approves a sign-up
 }
 
 model Document {
@@ -97,7 +102,9 @@ All JSON. Errors are always `{ error: { code, message } }` with codes `UNAUTHENT
 
 | Method & path | Who | Purpose |
 |---|---|---|
-| `POST /api/session` `{userId}` · `DELETE /api/session` | anyone | demo sign-in / sign-out |
+| `POST /api/session` `{email, password}` · `DELETE /api/session` | anyone | sign in (401 wrong creds, 403 pending) / sign out |
+| `POST /api/signup` `{name, email, password}` | anyone | request an account (PENDING) |
+| `GET/POST /api/admin/users` · `PATCH /api/admin/users/:id` `{action}` | admin | list, create account; approve / deny / make or remove admin |
 | `GET /api/documents?scope=owned\|shared` | user | list cards (title, preview, role, updatedAt) |
 | `POST /api/documents` `{title?}` | user | create |
 | `GET /api/documents/:id` | viewer+ | doc + my role + owner |
@@ -112,9 +119,10 @@ All JSON. Errors are always `{ error: { code, message } }` with codes `UNAUTHENT
 | `POST /api/documents/:id/requests` | viewer | request edit access |
 | `PATCH /api/requests/:id` `{decision: "APPROVE"\|"DENY"}` | owner of the doc | resolve a request |
 | `POST /api/import` (multipart `file`) | user | file → new doc |
-| `/api/documents/:id/attachments[...]` | P2 | list, upload, download, delete |
+| `GET/POST /api/documents/:id/attachments` | viewer+ / editor+ | list / upload (≤ 2 MB, allowlist, max 20) |
+| `GET/DELETE /api/documents/:id/attachments/:aid` | viewer+ / editor+ | download (`attachment` + `nosniff`) / remove |
 
-Pages: `/` (sign-in or dashboard) · `/docs/:id` (editor) · `/docs/:id/print` (PDF) · `/share/:token` (link redemption).
+Pages: `/` (sign-in or dashboard) · `/signup` · `/admin` · `/docs/:id` (editor) · `/docs/:id/print` (PDF) · `/share/:token` (link redemption).
 
 ## 6. Key flows
 
@@ -127,7 +135,7 @@ Pages: `/` (sign-in or dashboard) · `/docs/:id` (editor) · `/docs/:id/print` (
 ## 7. Security (STRIDE, scoped to this app)
 | Threat | Mitigation |
 |---|---|
-| **Spoofing** another user by editing the cookie | Session cookie is HMAC-signed with `SESSION_SECRET`, httpOnly, SameSite=Lax, Secure in production. (Demo sign-in itself is intentionally open, ADR-0004) |
+| **Spoofing** another user | bcrypt passwords; generic "email or password is incorrect"; HMAC-signed httpOnly SameSite=Lax cookie (Secure in prod); session only valid while the account is ACTIVE |
 | **Tampering** via direct API calls | Every mutating route re-derives the role server-side; tests cover viewer-PATCH → 403 |
 | **XSS** through doc content or imported files | Content is sanitized on every write with an allowlist (p, h1–h3, strong, em, u, s, ul/ol/li, blockquote, code, pre, br, a[href http/https/mailto]) |
 | **Info disclosure** of doc existence | 404 for no-access, unguessable cuid ids and link tokens |
@@ -138,5 +146,6 @@ Secrets (`DATABASE_URL`, `SESSION_SECRET`) live in `.env` / `.env.local` locally
 
 ## 8. Known limitations (honest list)
 - Two people editing the same doc at once: last write wins, with no live merge (ADR-0005).
-- Demo sign-in means anyone can act as any seeded user. That's fine for a review build and never for production.
+- The seeded demo accounts share a public password so reviewers can test. No password reset, email verification or sign-in rate limiting yet.
+- Attachments live in Postgres (fine at ≤ 2 MB). Larger files belong in object storage.
 - PDF export depends on the browser's print dialog.

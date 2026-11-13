@@ -2,6 +2,8 @@
 
 > Living document. Update it when a decision or scope changes, and commit it with the code.
 > Last updated: 2026-11-13 · Owner: Pratheek Eranki
+>
+> **Status at submission:** every P0, P1 and P2 item below is built and deployed. Scope added during the build after product review: rich formatting (D8), accounts with admin approval (A3–A5, superseding A1), attachments (F6) and Word export (F4). Cut items are unchanged.
 
 ## 1. Objective
 
@@ -31,6 +33,7 @@ Priority: **P0** = must ship · **P1** = ship after P0 is deployed · **P2** = o
 | D4 | Autosave | Changes save ~800 ms after typing stops. Status line shows `Saving…` → `Saved · 2:41 PM`, or `Couldn't save — retrying` on failure |
 | D5 | Reopen | Refreshing or reopening shows the same content with the same formatting |
 | D6 | Dashboard | Two tabs, **My documents** and **Shared with me**, each sorted by last updated. Cards show title, preview, an ownership tag and the time |
+| D8 | Rich formatting (added) | Font family, font size, text colour, highlighter, alignment, strikethrough, clear formatting; persisted and exported to HTML/Word |
 | D7 | Delete | The owner can delete a document after a confirm step. Non-owners cannot (403) |
 
 ### 2.2 File handling
@@ -58,7 +61,10 @@ Priority: **P0** = must ship · **P1** = ship after P0 is deployed · **P2** = o
 ### 2.4 Identity
 | ID | Pri | Requirement | Acceptance criteria |
 |---|---|---|---|
-| A1 | P0 | Demo sign-in | A sign-in page lists 3 seeded users. Picking one sets a signed, httpOnly session cookie. "Switch user" signs out |
+| A3 | P0 | Email + password sign-in (added, supersedes A1) | bcrypt; generic error for wrong credentials; pending accounts get a clear "waiting for approval" |
+| A4 | P0 | Request an account | `/signup` creates a PENDING account |
+| A5 | P0 | Admin console | Admins approve/deny requests, create accounts, grant/revoke admin; can't remove own admin |
+| A1 | ~~P0~~ | ~~Demo sign-in~~ (superseded by ADR-0008) | A sign-in page lists 3 seeded users. Picking one sets a signed, httpOnly session cookie. "Switch user" signs out |
 | A2 | P0 | Protected pages | Signed-out visits to `/docs/*` or `/api/*` → redirect to sign-in or 401 |
 
 ## 3. Commands
