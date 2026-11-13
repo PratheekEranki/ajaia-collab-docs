@@ -2,8 +2,14 @@
 
 A lightweight collaborative document editor inspired by Google Docs. You write rich-text documents, share them with teammates at the right permission level, import files, attach files, and export to other formats.
 
-**Live app:** https://ajaia-collab-docs-teal.vercel.app
-**Repo:** https://github.com/PratheekEranki/ajaia-collab-docs
+| | |
+|---|---|
+| **Live app** | https://ajaia-collab-docs-teal.vercel.app |
+| **Walkthrough video** | https://www.loom.com/share/2b5208d1caeb44a9b5cfcb342f29831b |
+| **Source** | https://github.com/PratheekEranki/ajaia-collab-docs |
+| **Docs** | [Architecture note](docs/ARCHITECTURE.md) · [AI workflow note](docs/AI_WORKFLOW.md) · [Decision records](docs/adr/README.md) · [Spec](docs/SPEC.md) · [Submission index](SUBMISSION.md) |
+
+**Stack:** Next.js 15 (App Router, TypeScript) · TipTap editor · Prisma + Neon Postgres · Vercel · Vitest (46 tests)
 
 > Use the `-teal` URL. `ajaia-collab-docs.vercel.app` belongs to an unrelated Vercel project.
 
@@ -20,10 +26,11 @@ The sign-in page has click-to-fill buttons for these. You can also **Request an 
 ### 3-minute review path
 1. Sign in as **Alice**. Open *Q4 launch plan*, try the toolbar (font, size, colour, highlighter, alignment, lists) and watch *Saving… → Saved*. Refresh: the formatting persists.
 2. **Share** → add `carol@ajaia.dev` as *Can view*. **File → Download** as .md / .html / .docx, or **Print / Save as PDF**.
-3. **Sign out** → sign in as **Carol**. *Shared with me* shows the plan, read-only, with a **Request edit access** button. Click it.
-4. Sign back in as **Alice** → **Share** → approve Carol's request. Carol can now edit.
-5. **Import file** on the dashboard (.txt / .md / .docx ≤ 2 MB) → it becomes a new doc. Try a .pdf to see the validation message. Ready-made samples (including files that should be rejected) are in [`demo-files/`](demo-files/README.md).
-6. As an editor, **Attach file** under a document. Viewers can download but not remove.
+3. In an **Incognito window**, sign in as **Carol** (so both users are open side by side). *Shared with me* shows the plan, read-only, with a **Request edit access** button. Click it.
+4. As **Alice** → **Share** → approve Carol's request. Carol refreshes and can now edit.
+5. **Comments:** Alice opens **Comments**; Carol selects text → **Comments** → posts. It appears for Alice within ~5 s. **History** lists automatic snapshots; **Restore** any of them.
+6. **Import file** on the dashboard (.txt / .md / .docx ≤ 2 MB) → it becomes a new doc. Try a .pdf to see the validation message. Ready-made samples (including files that should be rejected) are in [`demo-files/`](demo-files/README.md).
+7. As an editor, **Attach file** under a document. Viewers can download but not remove.
 
 ## Features
 
@@ -64,6 +71,7 @@ SESSION_SECRET="any-long-random-string"
 ```bash
 npm run db:push    # create tables
 npm run db:seed    # Alice, Bob, Carol + sample docs (safe to re-run)
+npm run db:reset-demo  # optional: wipe everything except the seed data
 npm run dev        # http://localhost:3000
 ```
 
@@ -74,7 +82,7 @@ npm run dev        # http://localhost:3000
 ```bash
 npm test                                         # unit tests (permissions, sanitizer, import/export converters)
 npm run build && npm start                       # in one terminal (production mode)
-APP_URL=http://localhost:3000 npm test           # in another: + end-to-end API tests (41 tests total)
+APP_URL=http://localhost:3000 npm test           # in another: + end-to-end API tests (46 tests total)
 ```
 
 Run e2e against the production build. The dev server compiles routes on first request, which can make the first hits slow enough to time out. The end-to-end suite signs in as the seeded users and checks that the **server** enforces access, beyond what the UI hides:
@@ -85,6 +93,7 @@ Run e2e against the production build. The dev server compiles routes on first re
 - import validation, link sharing that never downgrades a role
 - Markdown/HTML/Word export
 - attachment permissions, and that downloads are sent with `nosniff`
+- comment permissions (viewers can comment; only the author/editors resolve), and version restore (editors only, undoable)
 
 ### Deploy
 Vercel builds with `npm run vercel-build` = `prisma generate → prisma db push → seed → next build`. Set `DATABASE_URL` and `DATABASE_URL_UNPOOLED` in the Vercel project. `SESSION_SECRET` is optional; if it's missing, the session key is derived from the database URL.
@@ -93,14 +102,15 @@ Vercel builds with `npm run vercel-build` = `prisma generate → prisma db push 
 
 ```
 app/                 pages (server components) + /api route handlers
-components/          Editor shell, Toolbar, ShareDialog, Attachments, AdminConsole…
+components/          Editor shell, Toolbar, ShareDialog, SidePanel (comments/history), Attachments, AdminConsole…
 lib/permissions.ts   pure role/capability rules (the security core, unit-tested)
 lib/access.ts        load a doc + enforce a capability (used by every doc route)
 lib/content.ts       sanitizer, import/export converters, upload rules
 lib/session.ts       signed-cookie sessions
 prisma/              schema + idempotent seed
 tests/               vitest unit + e2e
-docs/                SPEC, ARCHITECTURE, ADRs, AI workflow note
+docs/                SPEC, ARCHITECTURE, ADRs, AI workflow note, screenshots
+demo-files/          sample uploads, including ones that should be rejected
 ```
 
 ## Status
@@ -122,4 +132,3 @@ docs/                SPEC, ARCHITECTURE, ADRs, AI workflow note
 4. Password reset + email invites via a mail provider. Move auth to Neon Auth / Auth.js.
 5. Rate limiting on sign-in/sign-up. Move attachments to object storage for larger files.
 
-Docs: [Spec](docs/SPEC.md) · [Architecture note](docs/ARCHITECTURE.md) · [ADRs](docs/adr/README.md) · [AI workflow note](docs/AI_WORKFLOW.md)
