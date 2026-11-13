@@ -22,7 +22,7 @@ The sign-in page has click-to-fill buttons for these. You can also **Request an 
 2. **Share** → add `carol@ajaia.dev` as *Can view*. **File → Download** as .md / .html / .docx, or **Print / Save as PDF**.
 3. **Sign out** → sign in as **Carol**. *Shared with me* shows the plan, read-only, with a **Request edit access** button. Click it.
 4. Sign back in as **Alice** → **Share** → approve Carol's request. Carol can now edit.
-5. **Import file** on the dashboard (.txt / .md / .docx ≤ 2 MB) → it becomes a new doc. Try a .pdf to see the validation message.
+5. **Import file** on the dashboard (.txt / .md / .docx ≤ 2 MB) → it becomes a new doc. Try a .pdf to see the validation message. Ready-made samples (including files that should be rejected) are in [`demo-files/`](demo-files/README.md).
 6. As an editor, **Attach file** under a document. Viewers can download but not remove.
 
 ## Features

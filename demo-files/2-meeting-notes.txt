@@ -1,0 +1,10 @@
+Design sync - Nov 13
+
+Attendees: Alice, Bob, Carol
+
+Decision: autosave replaces the Save button. "Make a copy" covers Save As.
+
+Open question: do pilot teams need comments in v1, or is sharing enough?
+Bob will ask the two pilot leads before Friday.
+
+Next sync: Thursday 10:00.
