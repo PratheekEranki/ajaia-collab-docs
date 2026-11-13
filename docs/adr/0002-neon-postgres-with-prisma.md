@@ -17,3 +17,8 @@ Use **Neon serverless Postgres** (free tier; project `billowing-boat-63532410`, 
 - A typed schema in `prisma/schema.prisma`; `prisma db push` + seed get a fresh DB running in one command.
 - Cold-start latency of a few hundred ms on the free tier is acceptable.
 - A schema change that drops data needs approval after the first deploy (see SPEC §7).
+
+## Update — 2026-11-13 (driver + deploy wiring)
+- Following the Neon agent skill's guidance for Vercel, Prisma runs through **`@prisma/adapter-pg` on a `pg` Pool registered with `attachDatabasePool`** (`lib/db.ts`).
+- Runtime uses pooled `DATABASE_URL`; `prisma db push` uses direct `DATABASE_URL_UNPOOLED` (`directUrl`), since migrations over the pooler can fail.
+- Vercel runs `vercel-build` = generate → `db push` → idempotent seed → `next build`. `db push` refuses destructive changes without `--accept-data-loss`, so a bad schema change fails the deploy instead of dropping data.
