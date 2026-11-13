@@ -1,0 +1,88 @@
+// Data model — see docs/ARCHITECTURE.md §3 and docs/adr/0006-sharing-model.md
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")          // pooled — runtime queries
+  directUrl = env("DATABASE_URL_UNPOOLED") // direct — schema push/migrations (Neon guidance)
+}
+
+enum Role {
+  VIEWER
+  EDITOR
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
+
+model User {
+  id        String          @id // readable seed ids: alice, bob, carol
+  email     String          @unique
+  name      String
+  owned     Document[]
+  shares    DocumentShare[]
+  requests  AccessRequest[]
+  uploads   Attachment[]
+  createdAt DateTime        @default(now())
+}
+
+model Document {
+  id          String          @id @default(cuid())
+  title       String
+  content     String          @default("") // sanitized HTML (ADR-0003)
+  ownerId     String
+  owner       User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  linkRole    Role? // null = link sharing off
+  linkToken   String          @unique @default(cuid())
+  shares      DocumentShare[]
+  requests    AccessRequest[]
+  attachments Attachment[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([ownerId, updatedAt])
+}
+
+model DocumentShare {
+  documentId String
+  userId     String
+  role       Role
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@id([documentId, userId])
+  @@index([userId])
+}
+
+model AccessRequest {
+  id         String        @id @default(cuid())
+  documentId String
+  userId     String
+  status     RequestStatus @default(PENDING)
+  document   Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime      @default(now())
+
+  @@index([documentId, status])
+}
+
+model Attachment {
+  id           String   @id @default(cuid())
+  documentId   String
+  filename     String
+  mimeType     String
+  size         Int
+  data         Bytes // ponytail: Postgres bytea, fine at ≤2 MB; move to object storage if files grow (ADR-0007)
+  uploadedById String
+  document     Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@index([documentId])
+}
