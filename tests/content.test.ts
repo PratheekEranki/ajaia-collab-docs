@@ -15,6 +15,28 @@ describe("sanitize (XSS boundary)", () => {
   });
 });
 
+describe("rich formatting survives sanitizing", () => {
+  it("keeps font family, size, colour, highlight and alignment", () => {
+    const html =
+      '<p style="text-align: center"><span style="color: #c0392b; font-family: Georgia; font-size: 24px">Big red</span> ' +
+      '<mark data-color="#fef08a" style="background-color: #fef08a; color: inherit">marked</mark></p>';
+    const out = sanitize(html);
+    expect(out).toContain('style="text-align:center"');
+    expect(out).toContain("color:#c0392b");
+    expect(out).toContain("font-family:Georgia");
+    expect(out).toContain("font-size:24px");
+    expect(out).toContain("background-color:#fef08a");
+  });
+  it("drops dangerous or unknown style values", () => {
+    const out = sanitize(
+      '<span style="color: red; background: url(javascript:alert(1)); position: fixed; font-size: 9999px">x</span>' +
+        '<p style="text-align: expression(alert(1))">y</p>',
+    );
+    expect(out).not.toMatch(/url|position|expression|9999/);
+    expect(out).toContain("<span>x</span>");
+  });
+});
+
 describe("imports", () => {
   it("turns markdown headings, lists and emphasis into HTML", () => {
     const html = markdownToHtml("# Plan\n\n- **one**\n- _two_\n\n1. first");

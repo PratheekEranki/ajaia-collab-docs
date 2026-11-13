@@ -107,6 +107,15 @@ button { cursor: pointer; }
 .prose blockquote { margin: 0 0 14px; padding-left: 16px; border-left: 3px solid var(--line); color: var(--muted); }
 .prose p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: #8a939d; float: left; height: 0; pointer-events: none; }
 
+.tb-select { height: 32px; padding: 0 6px; border: 1px solid transparent; border-radius: 6px; background: transparent; font-size: 13px; max-width: 160px; }
+.tb-select:hover:not(:disabled) { background: #e8ecf0; }
+.tb-select:disabled { color: #9aa3ad; }
+.swatches { padding: 8px; gap: 6px; }
+.swatch-grid { display: grid; grid-template-columns: repeat(5, 28px); gap: 6px; }
+.swatch { width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(22, 32, 42, 0.2); padding: 0; }
+.swatch:hover { outline: 2px solid var(--accent); outline-offset: 1px; }
+.prose mark { border-radius: 2px; padding: 0 1px; }
+
 /* Menus & dialogs */
 .menu { position: relative; }
 .menu-list { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; min-width: 220px; padding: 6px; background: var(--surface); border: 1px solid #c9d0d8; border-radius: 10px; box-shadow: 0 8px 24px rgba(22, 32, 42, 0.12); display: flex; flex-direction: column; }

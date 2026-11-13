@@ -6,9 +6,26 @@ import TurndownService from "turndown";
 export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
 export const IMPORT_TYPES = [".txt", ".md", ".docx"] as const;
 
-const ALLOWED = {
-  allowedTags: ["p", "h1", "h2", "h3", "strong", "em", "u", "s", "ul", "ol", "li", "blockquote", "code", "pre", "br", "hr", "a"],
-  allowedAttributes: { a: ["href"] },
+// Inline styles are allowed only for specific properties with strictly-validated values,
+// so formatting (fonts, sizes, colours, highlight, alignment) survives without opening CSS injection.
+const COLOR = /^(#[0-9a-f]{3,8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+)\s*)?\))$/i;
+const ALIGN = { "text-align": [/^(left|right|center|justify)$/] };
+
+const ALLOWED: sanitizeHtml.IOptions = {
+  allowedTags: ["p", "h1", "h2", "h3", "strong", "em", "u", "s", "ul", "ol", "li", "blockquote", "code", "pre", "br", "hr", "a", "span", "mark"],
+  allowedAttributes: { a: ["href"], span: ["style"], mark: ["style", "data-color"], p: ["style"], h1: ["style"], h2: ["style"], h3: ["style"] },
+  allowedStyles: {
+    p: ALIGN,
+    h1: ALIGN,
+    h2: ALIGN,
+    h3: ALIGN,
+    span: {
+      color: [COLOR],
+      "font-family": [/^[\w\s,'"-]{1,80}$/],
+      "font-size": [/^\d{1,2}px$/],
+    },
+    mark: { "background-color": [COLOR], color: [/^inherit$/] },
+  },
   allowedSchemes: ["http", "https", "mailto"],
   transformTags: { b: "strong", i: "em", h4: "h3", h5: "h3", h6: "h3", strike: "s", del: "s" },
 };

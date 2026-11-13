@@ -2,10 +2,17 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { EditorContent, useEditor, type Editor } from "@tiptap/react";
+import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
+import TextStyle from "@tiptap/extension-text-style";
+import Color from "@tiptap/extension-color";
+import Highlight from "@tiptap/extension-highlight";
+import TextAlign from "@tiptap/extension-text-align";
+import FontFamily from "@tiptap/extension-font-family";
+import { FontSize } from "./FontSize";
+import { Toolbar } from "./Toolbar";
 import { Avatar, RoleTag, api } from "./ui";
 import { ShareDialog } from "./ShareDialog";
 
@@ -77,6 +84,12 @@ export function EditorShell({ doc, owner, me, role, hasPendingRequest }: Props) 
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
       Underline,
+      TextStyle,
+      Color,
+      FontFamily,
+      FontSize,
+      Highlight.configure({ multicolor: true }),
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
       Placeholder.configure({ placeholder: "Start writing. Use the toolbar for headings, lists, and bold, italic or underlined text." }),
     ],
     content: doc.content,
@@ -208,51 +221,6 @@ function SaveStatus({ state, canEdit, onRetry }: { state: SaveState; canEdit: bo
       <span className={`dot${state.kind === "saving" ? " dot-busy" : ""}`} />
       {text}
     </span>
-  );
-}
-
-function Toolbar({ editor, disabled }: { editor: Editor | null; disabled: boolean }) {
-  if (!editor) return <div className="toolbar" style={{ height: 34 }} />;
-  const c = () => editor.chain().focus();
-  const tools: ({ label: React.ReactNode; name: string; active: boolean; run: () => void } | "sep")[] = [
-    { label: <b>B</b>, name: "Bold (Ctrl+B)", active: editor.isActive("bold"), run: () => c().toggleBold().run() },
-    { label: <i>I</i>, name: "Italic (Ctrl+I)", active: editor.isActive("italic"), run: () => c().toggleItalic().run() },
-    { label: <u>U</u>, name: "Underline (Ctrl+U)", active: editor.isActive("underline"), run: () => c().toggleUnderline().run() },
-    "sep",
-    { label: "Text", name: "Normal text", active: editor.isActive("paragraph"), run: () => c().setParagraph().run() },
-    { label: <b>H1</b>, name: "Heading 1", active: editor.isActive("heading", { level: 1 }), run: () => c().toggleHeading({ level: 1 }).run() },
-    { label: <b>H2</b>, name: "Heading 2", active: editor.isActive("heading", { level: 2 }), run: () => c().toggleHeading({ level: 2 }).run() },
-    { label: <b>H3</b>, name: "Heading 3", active: editor.isActive("heading", { level: 3 }), run: () => c().toggleHeading({ level: 3 }).run() },
-    "sep",
-    { label: "• List", name: "Bulleted list", active: editor.isActive("bulletList"), run: () => c().toggleBulletList().run() },
-    { label: "1. List", name: "Numbered list", active: editor.isActive("orderedList"), run: () => c().toggleOrderedList().run() },
-    { label: "❝", name: "Quote", active: editor.isActive("blockquote"), run: () => c().toggleBlockquote().run() },
-    "sep",
-    { label: "↶", name: "Undo (Ctrl+Z)", active: false, run: () => c().undo().run() },
-    { label: "↷", name: "Redo (Ctrl+Shift+Z)", active: false, run: () => c().redo().run() },
-  ];
-  return (
-    <div className="toolbar" role="toolbar" aria-label="Formatting">
-      {tools.map((t, i) =>
-        t === "sep" ? (
-          <span key={i} className="tool-sep" aria-hidden="true" />
-        ) : (
-          <button
-            key={t.name}
-            type="button"
-            className="tool"
-            title={t.name}
-            aria-label={t.name}
-            aria-pressed={t.active}
-            disabled={disabled}
-            onMouseDown={(e) => e.preventDefault()} // keep the editor selection
-            onClick={t.run}
-          >
-            {t.label}
-          </button>
-        ),
-      )}
-    </div>
   );
 }
 
