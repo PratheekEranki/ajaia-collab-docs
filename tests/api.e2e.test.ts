@@ -1,11 +1,11 @@
 // End-to-end API checks against a running app (local `npm run dev` or the deployed URL).
 // Proves permissions are enforced by the SERVER, not just hidden in the UI.
-//   BASE_URL=https://<your-app>.vercel.app npm test
-// Skipped automatically when BASE_URL isn't set. Uses seeded users (alice, bob, carol)
+//   APP_URL=https://<your-app>.vercel.app npm test
+// Skipped automatically when APP_URL isn't set. Uses seeded users (alice, bob, carol)
 // and creates/deletes its own document, so it is safe to run repeatedly.
 import { afterAll, describe, expect, it } from "vitest";
 
-const BASE = process.env.BASE_URL?.replace(/\/$/, "");
+const BASE = process.env.APP_URL?.replace(/\/$/, "");
 
 async function signIn(userId: string): Promise<string> {
   const res = await fetch(`${BASE}/api/session`, {
