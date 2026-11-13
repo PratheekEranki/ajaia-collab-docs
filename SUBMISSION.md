@@ -22,9 +22,10 @@ All features in the README's Features table, end to end on the live URL:
 - import of .txt/.md/.docx
 - export to Markdown, HTML, Word and PDF
 - attachments
+- comments and version history (with restore)
 
 ## What is incomplete / deliberately cut
-Real-time co-editing, comments, version history, email delivery, password reset, and sign-in rate limiting. The reasons are in README → Status and in the ADRs.
+Real-time co-editing, anchored comment threads / suggestion mode, email delivery, password reset, and sign-in rate limiting. The reasons are in README → Status and in the ADRs.
 
 ## What I'd build next (2–4 hours)
-Optimistic concurrency on save → version history → comments → email invites + password reset → rate limiting and object storage for attachments.
+Optimistic concurrency on save → anchored comments and suggestion mode → version diffs → email invites + password reset → rate limiting and object storage for attachments.

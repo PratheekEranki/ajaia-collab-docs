@@ -209,4 +209,37 @@ describe.skipIf(!BASE)("API permissions (e2e)", () => {
     expect((await call(alice, `/api/admin/users/${id}`, { method: "PATCH", body: JSON.stringify({ action: "deny" }) })).status).toBe(200);
     expect((await postSession(email, "longenough1")).status).toBe(401);
   });
+
+  it("comments: viewers can comment, only author/editors resolve, only author/owner delete", async () => {
+    const created = await call(alice, "/api/documents", { method: "POST", body: JSON.stringify({ title: "Comments e2e" }) });
+    const id = (await created.json()).document.id;
+    await call(alice, `/api/documents/${id}/shares`, { method: "PUT", body: JSON.stringify({ email: "carol@ajaia.dev", role: "VIEWER" }) });
+    const posted = await call(carol, `/api/documents/${id}/comments`, { method: "POST", body: JSON.stringify({ body: "Typo here?", quote: "teh" }) });
+    expect(posted.status).toBe(201);
+    const c = (await posted.json()).comment;
+    expect((await call(bob, `/api/documents/${id}/comments`)).status).toBe(404); // no access
+    expect((await call(carol, `/api/documents/${id}/comments`, { method: "POST", body: JSON.stringify({ body: "  " }) })).status).toBe(400);
+    expect((await call(alice, `/api/documents/${id}/comments/${c.id}`, { method: "PATCH", body: JSON.stringify({ resolved: true }) })).status).toBe(200);
+    const list = await (await call(carol, `/api/documents/${id}/comments`)).json();
+    expect(list.comments[0]).toMatchObject({ body: "Typo here?", quote: "teh", resolved: true });
+    expect((await call(alice, `/api/documents/${id}/comments/${c.id}`, { method: "DELETE" })).status).toBe(204);
+    await call(alice, `/api/documents/${id}`, { method: "DELETE" });
+  });
+
+  it("version history: edits create a snapshot, viewers can't restore, editors can", async () => {
+    const created = await call(alice, "/api/documents", { method: "POST", body: JSON.stringify({ title: "History e2e" }) });
+    const id = (await created.json()).document.id;
+    await call(alice, `/api/documents/${id}`, { method: "PATCH", body: JSON.stringify({ content: "<p>first draft</p>" }) });
+    const { versions } = await (await call(alice, `/api/documents/${id}/versions`)).json();
+    expect(versions).toHaveLength(1);
+    await call(alice, `/api/documents/${id}`, { method: "PATCH", body: JSON.stringify({ content: "<p>oops, overwritten</p>" }) });
+    await call(alice, `/api/documents/${id}/shares`, { method: "PUT", body: JSON.stringify({ email: "carol@ajaia.dev", role: "VIEWER" }) });
+    expect((await call(carol, `/api/documents/${id}/versions/${versions[0].id}`, { method: "POST" })).status).toBe(403);
+    expect((await call(alice, `/api/documents/${id}/versions/${versions[0].id}`, { method: "POST" })).status).toBe(200);
+    const doc = await (await call(alice, `/api/documents/${id}`)).json();
+    expect(doc.document.content).toBe("<p>first draft</p>");
+    // The pre-restore state was kept, so the restore is undoable.
+    expect((await (await call(alice, `/api/documents/${id}/versions`)).json()).versions.length).toBe(2);
+    await call(alice, `/api/documents/${id}`, { method: "DELETE" });
+  });
 });

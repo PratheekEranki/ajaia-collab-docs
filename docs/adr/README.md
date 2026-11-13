@@ -12,3 +12,4 @@ Never delete an ADR. If a decision changes, add a new one that supersedes it and
 | [0006](0006-sharing-model.md) | Owner + per-user roles, link sharing, access requests; no email sending | Accepted |
 | [0007](0007-import-export-formats.md) | Import txt/md/docx as new docs; export md/html/pdf(print) | Accepted |
 | [0008](0008-accounts-with-admin-approval.md) | Email + password accounts, admin approval and account creation | Accepted |
+| [0009](0009-comments-and-version-history.md) | Lightweight comments + throttled version history | Accepted |

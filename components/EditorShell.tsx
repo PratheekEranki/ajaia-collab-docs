@@ -16,6 +16,7 @@ import { Toolbar } from "./Toolbar";
 import { Avatar, RoleTag, api } from "./ui";
 import { ShareDialog } from "./ShareDialog";
 import { Attachments } from "./Attachments";
+import { SidePanel } from "./SidePanel";
 
 type Role = "OWNER" | "EDITOR" | "VIEWER";
 type Props = {
@@ -38,6 +39,7 @@ export function EditorShell({ doc, owner, me, role, hasPendingRequest }: Props) 
   const [shareOpen, setShareOpen] = useState(false);
   const [toast, setToast] = useState("");
   const [requested, setRequested] = useState(hasPendingRequest);
+  const [panel, setPanel] = useState<null | "comments" | "history">(null);
 
   // --- Autosave (ADR-0005): merge changes, flush 800 ms after the last one. ---
   const pending = useRef<{ title?: string; content?: string }>({});
@@ -100,6 +102,12 @@ export function EditorShell({ doc, owner, me, role, hasPendingRequest }: Props) 
     onUpdate: ({ editor }) => queue({ content: editor.getHTML() }),
   });
 
+  const getSelection = useCallback(() => {
+    if (!editor) return "";
+    const { from, to } = editor.state.selection;
+    return editor.state.doc.textBetween(from, to, " ").trim();
+  }, [editor]);
+
   function onTitleChange(value: string) {
     setTitle(value);
     if (value.trim()) queue({ title: value.trim() });
@@ -146,6 +154,12 @@ export function EditorShell({ doc, owner, me, role, hasPendingRequest }: Props) 
         />
         <SaveStatus state={save} canEdit={canEdit} onRetry={flush} />
         <RoleTag role={role} />
+        <button className="btn btn-sm" aria-pressed={panel === "comments"} onClick={() => setPanel(panel === "comments" ? null : "comments")}>
+          Comments
+        </button>
+        <button className="btn btn-sm" aria-pressed={panel === "history"} onClick={() => setPanel(panel === "history" ? null : "history")}>
+          History
+        </button>
         <FileMenu docId={doc.id} title={title} isOwner={role === "OWNER"} onToast={flash} />
         <button className="btn btn-primary btn-sm" onClick={() => setShareOpen(true)}>
           Share
@@ -180,6 +194,22 @@ export function EditorShell({ doc, owner, me, role, hasPendingRequest }: Props) 
         <Attachments docId={doc.id} canEdit={canEdit} onToast={flash} />
       </div>
 
+      {panel && (
+        <SidePanel
+          docId={doc.id}
+          tab={panel}
+          onTab={setPanel}
+          onClose={() => setPanel(null)}
+          meId={me.id}
+          role={role}
+          getSelection={getSelection}
+          onBeforeRestore={async () => {
+            if (timer.current) clearTimeout(timer.current);
+            await flush();
+          }}
+          onToast={flash}
+        />
+      )}
       {shareOpen && (
         <ShareDialog
           docId={doc.id}

@@ -57,3 +57,11 @@ describe("maxShareRole (link redemption)", () => {
     expect(maxShareRole("VIEWER", "EDITOR")).toBe("EDITOR");
   });
 });
+
+import { snapshotDue, SNAPSHOT_INTERVAL_MS } from "../lib/versions";
+describe("version snapshot throttle", () => {
+  const t0 = new Date("2026-11-13T12:00:00Z");
+  it("snapshots the first save", () => expect(snapshotDue(null, t0)).toBe(true));
+  it("skips saves within the interval", () => expect(snapshotDue(t0, new Date(t0.getTime() + 30_000))).toBe(false));
+  it("snapshots again once the interval passes", () => expect(snapshotDue(t0, new Date(t0.getTime() + SNAPSHOT_INTERVAL_MS))).toBe(true));
+});

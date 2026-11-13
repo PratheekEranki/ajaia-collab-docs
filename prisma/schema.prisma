@@ -36,6 +36,8 @@ model User {
   shares    DocumentShare[]
   requests  AccessRequest[]
   uploads   Attachment[]
+  versions  DocumentVersion[]
+  comments  Comment[]
   createdAt DateTime        @default(now())
 }
 
@@ -50,6 +52,8 @@ model Document {
   shares      DocumentShare[]
   requests    AccessRequest[]
   attachments Attachment[]
+  versions    DocumentVersion[]
+  comments    Comment[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -93,4 +97,32 @@ model Attachment {
   createdAt    DateTime @default(now())
 
   @@index([documentId])
+}
+
+// Version history (ADR-0009): a snapshot at most every 2 minutes of editing, plus one before every restore.
+model DocumentVersion {
+  id         String   @id @default(cuid())
+  documentId String
+  title      String
+  content    String
+  authorId   String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([documentId, createdAt])
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  documentId String
+  authorId   String
+  body       String
+  quote      String? // the text that was selected when commenting
+  resolved   Boolean  @default(false)
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([documentId, createdAt])
 }

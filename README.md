@@ -36,6 +36,8 @@ The sign-in page has click-to-fill buttons for these. You can also **Request an 
 | Accounts | Email + password (bcrypt); **sign-up creates a request that an admin approves**; admins create accounts directly and grant admin |
 | Files in | Import **.txt, .md, .docx** (≤ 2 MB) as a new document (headings, lists and emphasis preserved) |
 | Files out | Export **Markdown, HTML, Word (.docx)**, and **PDF** via a print-optimised page |
+| Comments | Anyone with access (viewers too) can comment, optionally on selected text; author or editors resolve/reopen; author or owner deletes |
+| Version history | Automatic snapshot at most every 2 min of editing; editors restore any version (the current state is kept first, so restores are undoable) |
 | Attachments | Attach PDF/Office/text/CSV/image/ZIP (≤ 2 MB, max 20 per doc); editors add/remove, everyone with access downloads |
 | Security | Every API route re-checks the caller's role on the server; content sanitized against an allowlist (including inline styles); 404 for docs you can't see; signed httpOnly session cookie |
 
@@ -106,7 +108,8 @@ docs/                SPEC, ARCHITECTURE, ADRs, AI workflow note
 **Working end to end:** everything in the Features table, on the live URL.
 
 **Known limitations / deliberately cut:**
-- No real-time co-editing or presence. Saves are last-write-wins (ADR-0005).
+- No real-time co-editing or presence. Saves are last-write-wins (ADR-0005). Version history is the safety net.
+- Comments aren't anchored to a text range: they keep a quote of the selected text instead, so editing the text doesn't break them.
 - No email delivery: sharing by email grants access to an existing account, and admins hand out temporary passwords directly.
 - No password reset, email verification or sign-in rate limiting yet.
 - Markdown export drops colours, fonts and underline (Markdown has no syntax for them). HTML and Word keep them.
@@ -114,8 +117,8 @@ docs/                SPEC, ARCHITECTURE, ADRs, AI workflow note
 
 **Next 2–4 hours:**
 1. Optimistic concurrency (reject stale saves with 409 and show "someone else edited this") as a step toward real-time editing.
-2. Version history (snapshot on save, restore).
-3. Comments and suggestions.
+2. Anchored comments (highlight the range in the editor), replies and @mentions; suggestion mode.
+3. Version diff view (compare two versions) and named versions.
 4. Password reset + email invites via a mail provider. Move auth to Neon Auth / Auth.js.
 5. Rate limiting on sign-in/sign-up. Move attachments to object storage for larger files.
 
