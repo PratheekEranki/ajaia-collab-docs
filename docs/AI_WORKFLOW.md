@@ -35,6 +35,7 @@
 - **Permissions are pure and unit-tested** (`lib/permissions.ts`), and an **end-to-end suite runs against the deployed app**. It proves the server returns 401/403/404 for each forbidden action, not just that buttons are hidden.
 - **The e2e tests caught a real deployment mistake:** the first run hit `ajaia-collab-docs.vercel.app`, which is *someone else's* Vercel project. The mismatched error format exposed it, and we switched to our real `-teal` domain.
 - **Security tests for the sanitizer:** `<script>`, `onerror=`, `javascript:` links, `url()`/`position`/`expression()` in styles. Attachment downloads are checked for `nosniff`.
+- **Full suite: 41/41 passing** (24 unit + 17 e2e) against a production build running locally on the same Neon database as the live site. A first run against the dev server showed a timeout in the request→approve test. Investigation showed every call answered in about 1 s by hand, and the slowness came from on-demand route compilation in dev mode, not from the app. So we documented running e2e against `next build && next start`.
 - **Manual click-throughs on the live URL** with each role:
   - formatting persists after refresh
   - the autosave status changes correctly

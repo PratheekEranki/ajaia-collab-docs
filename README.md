@@ -71,10 +71,11 @@ npm run dev        # http://localhost:3000
 
 ```bash
 npm test                                         # unit tests (permissions, sanitizer, import/export converters)
-APP_URL=http://localhost:3000 npm test           # + end-to-end API tests against a running app
+npm run build && npm start                       # in one terminal (production mode)
+APP_URL=http://localhost:3000 npm test           # in another: + end-to-end API tests (41 tests total)
 ```
 
-The end-to-end suite signs in as the seeded users and checks that the **server** enforces access, beyond what the UI hides:
+Run e2e against the production build. The dev server compiles routes on first request, which can make the first hits slow enough to time out. The end-to-end suite signs in as the seeded users and checks that the **server** enforces access, beyond what the UI hides:
 - 401 when signed out, and forged cookies are rejected
 - 404 for strangers, 403 for viewer edits and non-owner sharing
 - the request → approve flow
