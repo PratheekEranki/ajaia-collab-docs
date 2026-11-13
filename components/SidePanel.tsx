@@ -60,6 +60,13 @@ function Comments({ docId, meId, role, getSelection, onToast }: Props) {
     setQuote(getSelection().slice(0, 300));
   }, [load, getSelection]);
 
+  // ponytail: polling, not websockets. While the panel is open (and the tab visible), pick up
+  // other people's comments every 5 s. Real-time push is listed as next step (ADR-0009).
+  useEffect(() => {
+    const t = setInterval(() => document.visibilityState === "visible" && load(), 5000);
+    return () => clearInterval(t);
+  }, [load]);
+
   async function add(e: React.FormEvent) {
     e.preventDefault();
     setError("");

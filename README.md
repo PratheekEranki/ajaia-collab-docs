@@ -36,7 +36,7 @@ The sign-in page has click-to-fill buttons for these. You can also **Request an 
 | Accounts | Email + password (bcrypt); **sign-up creates a request that an admin approves**; admins create accounts directly and grant admin |
 | Files in | Import **.txt, .md, .docx** (≤ 2 MB) as a new document (headings, lists and emphasis preserved) |
 | Files out | Export **Markdown, HTML, Word (.docx)**, and **PDF** via a print-optimised page |
-| Comments | Anyone with access (viewers too) can comment, optionally on selected text; author or editors resolve/reopen; author or owner deletes |
+| Comments | Anyone with access (viewers too) can comment, optionally on selected text; new comments from others appear within ~5 s while the panel is open; author or editors resolve/reopen; author or owner deletes |
 | Version history | Automatic snapshot at most every 2 min of editing; editors restore any version (the current state is kept first, so restores are undoable) |
 | Attachments | Attach PDF/Office/text/CSV/image/ZIP (≤ 2 MB, max 20 per doc); editors add/remove, everyone with access downloads |
 | Security | Every API route re-checks the caller's role on the server; content sanitized against an allowlist (including inline styles); 404 for docs you can't see; signed httpOnly session cookie |

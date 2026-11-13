@@ -16,4 +16,5 @@ Both are on the brief's optional stretch list. They were added late in the timeb
 
 ## Consequences
 - Version history doubles as the safety net for last-write-wins saves (ADR-0005).
+- Other people's comments appear within ~5 s: the open panel polls while the tab is visible. True push (websockets / Neon Realtime) is a next step.
 - Quotes can go stale if the text changes, which is acceptable for review-style comments.
